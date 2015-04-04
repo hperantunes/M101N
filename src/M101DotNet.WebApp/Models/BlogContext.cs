@@ -14,10 +14,8 @@ namespace M101DotNet.WebApp.Models
         public const string POSTS_COLLECTION_NAME = "posts";
         public const string USERS_COLLECTION_NAME = "users";
 
-        // This is ok... Normally, these or the entire BlogContext
-        // would be put into an IoC container. We aren't using one,
-        // so we'll just keep them statically here as they are 
-        // thread-safe.
+        // This is ok... Normally, they would be put into
+        // an IoC container.
         private static readonly IMongoClient _client;
         private static readonly IMongoDatabase _database;
 
@@ -31,6 +29,11 @@ namespace M101DotNet.WebApp.Models
         public IMongoClient Client
         {
             get { return _client; }
+        }
+
+        public IMongoCollection<Post> Posts
+        {
+            get { return _database.GetCollection<Post>(POSTS_COLLECTION_NAME); }
         }
 
         public IMongoCollection<User> Users

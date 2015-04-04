@@ -7,13 +7,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace M101DotNet.WebApp.Models
 {
-    public class User
+    public class Post
     {
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-
-        public string Name { get; set; }
-
-        public string Email { get; set; }
+        // XXX WORK HERE
+        // add in the appropriate properties for a post
+        // The homework instructions contain the schema.
     }
 }

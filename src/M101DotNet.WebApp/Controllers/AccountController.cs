@@ -34,18 +34,7 @@ namespace M101DotNet.WebApp.Controllers
             }
 
             var blogContext = new BlogContext();
-            // XXX WORK HERE
-            // fetch a user by the email in model.Email
-
-            var client = new MongoClient();
-            var db = client.GetDatabase("blog");
-            var collection = db.GetCollection<User>("users");
-            var builder = Builders<User>.Filter;
-            var filter = builder.Eq(x => x.Email, model.Email);
-
-            var users = await collection.Find(filter).ToListAsync();
-            var user = users.FirstOrDefault();
-
+            var user = await blogContext.Users.Find(x => x.Email == model.Email).SingleOrDefaultAsync();
             if (user == null)
             {
                 ModelState.AddModelError("Email", "Email address has not been registered.");
@@ -92,19 +81,13 @@ namespace M101DotNet.WebApp.Controllers
             }
 
             var blogContext = new BlogContext();
-            // XXX WORK HERE
-            // create a new user and insert it into the database
-
-            var client = new MongoClient();
-            var db = client.GetDatabase("blog");
-            var collection = db.GetCollection<User>("users");
-            var user = new Models.User
+            var user = new User
             {
-                Email = model.Email,
-                Name = model.Name
+                Name = model.Name,
+                Email = model.Email
             };
-            await collection.InsertOneAsync(user);
 
+            await blogContext.Users.InsertOneAsync(user);
             return RedirectToAction("Index", "Home");
         }
 
