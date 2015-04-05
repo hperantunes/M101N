@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using M101DotNet.WebApp.Models;
+using M101DotNet.WebApp.Models.Home;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using System;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
-using MongoDB.Driver;
-using M101DotNet.WebApp.Models;
-using M101DotNet.WebApp.Models.Home;
-using MongoDB.Bson;
-using System.Linq.Expressions;
 
 namespace M101DotNet.WebApp.Controllers
 {
@@ -20,6 +17,9 @@ namespace M101DotNet.WebApp.Controllers
             // XXX WORK HERE
             // find the most recent 10 posts and order them
             // from newest to oldest
+
+            var sort = Builders<Post>.Sort.Descending(p => p.CreatedAtUtc);
+            var recentPosts = await blogContext.Posts.Find(new BsonDocument()).Sort(sort).Limit(10).ToListAsync();
 
             var model = new IndexModel
             {
@@ -46,6 +46,22 @@ namespace M101DotNet.WebApp.Controllers
             var blogContext = new BlogContext();
             // XXX WORK HERE
             // Insert the post into the posts collection
+
+            var user = Request.GetOwinContext().Authentication.User;
+            var post = new Post
+            {
+                Author = user.Identity.Name,
+                CreatedAtUtc = DateTime.Now.ToUniversalTime(),
+                Title = model.Title,
+                Content = model.Content
+            };
+            foreach (var tag in model.Tags.Split(','))
+            {
+                post.Tags.Add(tag);
+            }
+
+            await blogContext.Posts.InsertOneAsync(post);
+
             return RedirectToAction("Post", new { id = post.Id });
         }
 
@@ -56,6 +72,8 @@ namespace M101DotNet.WebApp.Controllers
 
             // XXX WORK HERE
             // Find the post with the given identifier
+
+            var post = await blogContext.Posts.Find(p => p.Id.Equals(id)).SingleOrDefaultAsync();
 
             if (post == null)
             {
@@ -80,6 +98,9 @@ namespace M101DotNet.WebApp.Controllers
             // Otherwise, return all the posts.
             // Each of these results should be in descending order.
 
+            var sort = Builders<Post>.Sort.Descending(p => p.CreatedAtUtc);
+            var posts = await blogContext.Posts.Find(new BsonDocument()).Sort(sort).ToListAsync();
+
             return View(posts);
         }
 
@@ -95,6 +116,16 @@ namespace M101DotNet.WebApp.Controllers
             // XXX WORK HERE
             // add a comment to the post identified by model.PostId.
             // you can get the author from "this.User.Identity.Name"
+
+            var user = Request.GetOwinContext().Authentication.User;
+            var comment = new Comment
+            {
+                Author = user.Identity.Name,
+                CreatedAtUtc = DateTime.Now.ToUniversalTime(),
+                Content = model.Content
+            };
+            var update = Builders<Post>.Update.Push<Comment>(p => p.Comments, comment);
+            await blogContext.Posts.FindOneAndUpdateAsync(p => p.Id.Equals(model.PostId), update);
 
             return RedirectToAction("Post", new { id = model.PostId });
         }
