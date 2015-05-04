@@ -154,6 +154,9 @@ namespace M101DotNet.WebApp.Controllers
             // This is documented here along with a workaround:
             // https://jira.mongodb.org/browse/CSHARP-1246
 
+            var field = string.Format("Comments.{0}.Likes", model.Index);
+            await blogContext.Posts.FindOneAndUpdateAsync(p => p.Id == model.PostId, Builders<Post>.Update.Inc(field, 1));
+
             return RedirectToAction("Post", new { id = model.PostId });
         }
     }
