@@ -22,9 +22,16 @@ namespace M101DotNet.WebApp.Controllers
                 .Limit(10)
                 .ToListAsync();
 
+            var tags = await blogContext.Posts.Aggregate()
+                .Project(x => new { _id = x.Id, Tags = x.Tags })
+                .Unwind(x => x.Tags)
+                .Group<TagProjection>("{ _id: '$Tags', Count: { $sum: 1 } }")
+                .ToListAsync();
+
             var model = new IndexModel
             {
-                RecentPosts = recentPosts
+                RecentPosts = recentPosts,
+                Tags = tags
             };
 
             return View(model);
@@ -98,7 +105,6 @@ namespace M101DotNet.WebApp.Controllers
 
             var posts = await blogContext.Posts.Find(filter)
                 .SortByDescending(x => x.CreatedAtUtc)
-                .Limit(10)
                 .ToListAsync();
 
             return View(posts);
@@ -124,6 +130,29 @@ namespace M101DotNet.WebApp.Controllers
             await blogContext.Posts.UpdateOneAsync(
                 x => x.Id == model.PostId,
                 Builders<Post>.Update.Push(x => x.Comments, comment));
+
+
+            return RedirectToAction("Post", new { id = model.PostId });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> CommentLike(CommentLikeModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction("Post", new { id = model.PostId });
+            }
+
+            var blogContext = new BlogContext();
+
+            // XXX WORK HERE
+            // Increment the Likes field for the comment at {model.Index}
+            // inside the post {model.PostId}.
+            //
+            // NOTE: The 2.0.0 driver has a bug in the expression parser and 
+            // might throw an exception depending on how you solve this problem. 
+            // This is documented here along with a workaround:
+            // https://jira.mongodb.org/browse/CSHARP-1246
 
             return RedirectToAction("Post", new { id = model.PostId });
         }
